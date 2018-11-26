@@ -234,46 +234,6 @@ create_site_omd()
             echo "$(sed "s/num_client_threads=20/num_client_threads=100/g" "${NAGIOS_CONFIG_FILE}/nagios.cfg")" \
             > "${NAGIOS_CONFIG_FILE}/nagios.cfg"
             
-            # Os próximos 3 comandos faz a personalização do template 2com 
-            # para a página web de serviço de monitoramento.
-            echo "$(sed "s/Server 01/${NOME_CLIENTE}/g" "./template/builtin.py")" \
-            > "./template/builtin.py"
-            
-            echo "$(sed "s/mathias-kettner.de/www.2comconsulting.com.br/g" "${URL_OMD_HTDOCS}/sidebar.py")" \
-            > "${URL_OMD_HTDOCS}/sidebar.py"
-            
-            echo "$(sed "s/Mathias Kettner/2Com Consulting/g" "${URL_OMD_HTDOCS}/sidebar.py")" \
-            > "${URL_OMD_HTDOCS}/sidebar.py"
-            
-            # Faz uma busca pela linha que contém o número de dashlet_padding e altera de 23 para 80.
-            echo "$(sed "s/dashlet_padding  = 23/dashlet_padding  = 80/g" "${URL_OMD_HTDOCS}/dashboard.py")" \
-            > "${URL_OMD_HTDOCS}/dashboard.py"
-
-            # Faz a cópia das imagens do template 2com para a página web do serviço de monitoramento.
-            ${CP} ${CP_OPT1} ./template/dashboard.css "${URL_OMD_HTDOCS}/dashboard.css" \
-            1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
-            
-            ${CP} ${CP_OPT1} ./template/sidebar.css "${URL_OMD_HTDOCS}/sidebar.css" \
-            1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
-            
-            ${CP} ${CP_OPT1} ./template/builtin.py "${URL_OMD_DASH}/builtin.py" \
-            1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
-            
-            ${CP} ${CP_OPT1} ./template/sidebar_top.png "${URL_OMD_IMG}/sidebar_top.png" \
-            1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
-            
-            ${CP} ${CP_OPT1} ./template/favicon.ico "${URL_OMD_IMG}/favicon.ico" \
-            1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
-            
-            ${CP} ${CP_OPT1} ./template/mk_logo_small.gif "${URL_OMD_IMG}/mk_logo_small.gif" \
-            1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
-            
-            ${CP} ${CP_OPT1} ./template/sidebar_background.jpg "${URL_OMD_IMG}/sidebar_background.jpg" \
-            1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
-            
-            ${CP} ${CP_OPT1} ./template/contentframe_background.jpg "${URL_OMD_IMG}/contentframe_background.jpg" \
-            1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
-
             usermod -G oinstall,dba,omd ${SITE} 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
             usermod -G oinstall,dba,asmadmin,asmdba,asmoper,osasm,omd ${SITE} 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
 

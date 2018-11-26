@@ -140,5 +140,5 @@ Em seguida, dentro do diretório do programa **2com_monitor**, como **root** exe
 **2com_monitor_install.bash** e aguarde.
 
 ```shell
-2com_monitor]# bash 2com_monitor_install.bash
+2com_monitor]# bash runInstaller
 ```

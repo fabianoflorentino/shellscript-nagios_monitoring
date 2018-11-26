@@ -1,14 +1,6 @@
-# 2com_monitor
 
-Projeto para implantação do monitoramento 2com.
-
-## Descrição
-Site: https://gitlab.com/2com-shellscript-monitoramento/2com_monitor.<br/>
-Autor: 2com Consulting (Time de Monitoramento).<br/>
-Manutenção: Fabiano S. Florentino e Carol Santos.<br/>
 
 Licença: GPL (https://pt.wikipedia.org/wiki/GNU_General_Public_License)<br/>
-
 
 Programa desenvolvido pra realizar a instalação do programa OMD ([Open Monitoring Distribution](http://omdistro.org/)) em sistemas<br/>
 operacionais baseados na distribuição RedHat. (Oracle Linux 6/7 e ou CentOS 6/7).<br/>

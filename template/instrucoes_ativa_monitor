@@ -1,8 +1,0 @@
-copiar para o novo server
-
-/opt/omd/versions/1.20/share/check_mk/web/plugins/dashboard/builtin.py
-/opt/omd/versions/1.20/share/check_mk/web/htdocs/images/sidebar_top.png
-/opt/omd/versions/1.20/share/check_mk/web/htdocs/sidebar.css
-
-renomear o arquivo dashboard.css para /omd/versions/1.20/share/check_mk/web/htdocs/dashboard.css.old
-

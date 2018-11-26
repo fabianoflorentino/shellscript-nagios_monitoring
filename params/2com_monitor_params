@@ -1,17 +1,4 @@
 #!/usr/bin/env bash
-
-# ----------------------------------------------------------------------------------------
-#
-# 2com_monitor_install.bash - Faz a instalação e configuração do serviço de monitoramento.
-#
-# Site: https://gitlab.com/2com-shellscript-monitoramento/2com_monitor.
-# Autor: 2com Consulting (Time de Monitoramento).
-# Manutenção: Fabiano S. Florentino e Carol Santos.
-#
-#
-# Licença: GPL (https://pt.wikipedia.org/wiki/GNU_General_Public_License)
-#
-#-----------------------------------------------------------------------------------------
 #
 # Para executar esse programa é preciso algumas informações do servidor e dos serviços que
 # vão ser monitorados.

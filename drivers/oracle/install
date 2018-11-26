@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+install_oracle_driver()
+
+{
+    # Verifica se o pacote perl-ExtUtils-MakeMaker está instalado no sistema.
+    if [ -z "${PERL_EXTUTILS_MAKE_VERIFY}" ]; then
+
+        {
+            ${YUM_PRG} ${YUM_OPT1} ${YUM_OPT_FLAG1} \
+            perl-ExtUtils-MakeMaker 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+
+        } &> /dev/null && echo -e "${GREEN}perl-ExtUtils-MakeMaker ...............OK!${NC}\n"
+    else
+        echo -e "${GREEN}perl-ExtUtils-MakeMaker ...............OK!${NC}\n"
+    fi
+
+    {
+        if [ ! -f ${OCL_DRIVE_FILE} ]; then
+        
+            # Copia os arquivos de instalação e compilação para o diretório
+            # "/usr/local" o programa acessa esse diretorio pelo link simbolico
+            # "./drivers/local".
+            ${CP} ${CP_OPT1} ./drivers/oracle ./drivers/local/ 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+
+            # Checa, compila e instala o DBD Oracle drive.
+            cd ./drivers/local/oracle
+            
+            perl Makefile.PL >> ${COMPILE_LOG}
+            if [ $? == 2 ]; then    
+                
+                echo -e "${RED}Por favor verifique as variaveis de ambiente!${NC}\n" >> ${COMPILE_LOG}
+                exit 2
+            fi
+                
+            make >> ${COMPILE_LOG}
+            if [ $? == 2 ]; then    
+                
+                echo -e "${RED}Erro ao configurar o arquivo MAKE, verifique os requisitos do sistema.${NC}\n" >> ${COMPILE_LOG}
+                exit 2
+            fi
+            
+            make install >> ${COMPILE_LOG}
+            if [ $? == 2 ]; then    
+                
+                echo -e "${RED}Erro ao instalar o drive, verifique os requisitos do sistema.${NC}\n" >> ${COMPILE_LOG}
+                exit 2
+            fi
+            
+            ### Return to directory base.
+            cd -
+        else
+    
+            echo -e "${GREEN}DBD Driver Oracle .....................OK!${NC}\n"
+        fi
+
+    } &> /dev/null && echo -e "${GREEN}DBD Driver Oracle .....................OK!${NC}\n"
+}

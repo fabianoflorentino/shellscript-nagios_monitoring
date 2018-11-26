@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+test_user()
+{
+
+su - oracle -c "$ORACLE_HOME/bin/sqlplus -s << EOF > /dev/null
+connect / as sysdba
+select username from dba_users;
+exit;
+EOF"
+
+}
+
+config_user_omd_oracle()
+{
+
+if test_user |grep -i omd > /dev/null
+then
+        echo -e "${GREEN}Usuario OMD no banco ..................OK!${NC}\n"
+else
+
+su - oracle -c "$ORACLE_HOME/bin/sqlplus -s << EOF > /dev/null
+connect / as sysdba
+create user omd identified by \"omdspring\";
+grant dba to omd;
+exit;
+EOF"
+echo -e "${GREEN}Usuario OMD no banco ..................OK!${NC}\n"
+
+fi
+}

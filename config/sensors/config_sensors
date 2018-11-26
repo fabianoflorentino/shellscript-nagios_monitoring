@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+config_sensors()
+{
+    {
+        # Verifica se a pasta de sensores "/usr/lib/check_mk_agent/plugins" está
+        # vazia.
+        if [ ! "$(ls -A ${CHECK_MK_DIR_PLG})" ];then
+
+            for BASE in ${BASES[@]}; do
+
+                # check_backup_compress.sh
+                echo "$(sed "s/BASE=/BASE=${BASE}/g" "${DIR_TEMP}/check_backup_compress.sh")" \
+                > "${CHECK_MK_DIR_PLG}/check_backup_compress_${BASE}.sh"
+
+                # check_backup_export.sh
+                echo "$(sed "s/BASE=/BASE=${BASE}/g" "${DIR_TEMP}/check_backup_export.sh")" \
+                > "${CHECK_MK_DIR_PLG}/check_backup_export_${BASE}.sh"
+
+                # check_list_backup_local.sh
+                echo "$(sed "s/BASE=/BASE=${BASE}/g" "${DIR_TEMP}/check_list_backup_local.sh")" \
+                > "${DIR_TEMP}/check_list_backup_local.sh"
+
+                echo "$(sed "s/DIR_BACKUP_LOCAL=/DIR_BACKUP_LOCAL=\"${DB_BKP_DIR}\/backup\_old\"/g" \
+                "${DIR_TEMP}/check_list_backup_local.sh")" > "${DIR_TEMP}/check_list_backup_local.sh"
+                
+                ${CP} ${CP_OPT1} "${DIR_TEMP}/check_list_backup_local.sh" \
+                "${CHECK_MK_DIR_PLG}/check_list_backup_local_${BASE}.sh" 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+                
+                
+                # check_list_backup_red_banco.sh
+                echo "$(sed "s/BASE=/BASE=$BASE/g" "${DIR_TEMP}/check_list_backup_red_banco.sh")" \
+                > "${CHECK_MK_DIR_PLG}/check_list_backup_red_banco_${BASE}.sh"
+                
+                # check_rman_agent_archive.sh
+                echo "$(sed "s/BASE=/BASE=$BASE/g" "${DIR_TEMP}/check_rman_agent_archive.sh")" \
+                > "${CHECK_MK_DIR_PLG}/check_rman_agent_archive_${BASE}.sh"
+                
+                # check_rman_agent_full.sh
+                echo "$(sed "s/BASE=/BASE=$BASE/g" "${DIR_TEMP}/check_rman_agent_full.sh")" \
+                > "${CHECK_MK_DIR_PLG}/check_rman_agent_full_${BASE}.sh"
+                
+                # check_size_backup_banco.sh
+                echo "$(sed "s/BASE=/BASE=$BASE/g" "${DIR_TEMP}/check_size_backup_banco.sh")" \
+                > "${DIR_TEMP}/check_size_backup_banco_${BASE}.sh"
+
+                echo "$(sed "s/BACKUP_OLD=/BACKUP_OLD=\"${DB_BKP_DIR}\/backup\_old\"/g" "${DIR_TEMP}/check_size_backup_banco_${BASE}.sh")" \
+                > "${DIR_TEMP}/check_size_backup_banco.sh"
+                
+                ${CP} ${CP_OPT1} "${DIR_TEMP}/check_size_backup_banco.sh" \
+                "${CHECK_MK_DIR_PLG}/check_size_backup_banco.sh" 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+                
+                # check_version_agent.sh
+                echo "$(sed "s/BASE=/BASE=$BASE/g" "${DIR_TEMP}/check_version_agent.sh")" \
+                > "${CHECK_MK_DIR_PLG}/check_version_agent_${BASE}.sh"
+
+            done
+            
+            # check_integrity_red_local.sh
+            ${CP} ${CP_OPT1} ${DIR_TEMP}/check_integrity_red_local.sh \
+            ${CHECK_MK_DIR_PLG}/check_integrity_red_local.sh 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+
+
+            if [ "${BKP_WINTHOR}" == "True" ]
+            then
+                # check_list_backup_sistema_local.sh.sh
+                echo "$(sed "s/DIR=/DIR=\"${DB_BKP_DIR}\/backup\_old\"/g" "${DIR_TEMP}/check_list_backup_sistema_local.sh")" \
+                > "${CHECK_MK_DIR_PLG}/check_list_backup_sistema_local.sh"
+
+                # check_list_backup_sistema_local.sh
+                ${CP} ${CP_OPT1} ${DIR_TEMP}/check_list_backup_sistema_local.sh \
+                ${DIR_TEMP}/check_list_backup_sistema_local.sh 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+
+                # check_size_backup_sistema.sh
+                ${CP} ${CP_OPT1} ${DIR_TEMP}/check_size_backup_sistema.sh \
+                ${CHECK_MK_DIR_PLG}/check_size_backup_sistema.sh 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+            fi
+
+            if [ "${BKP_NUVEM}" == "True" ]
+            then
+                # check_list_backup_nuvem.sh
+                echo "$(sed "s/BASE=/BASE=$BASE/g" "${DIR_TEMP}/check_list_backup_nuvem.sh")" \
+                > "${CHECK_MK_DIR_PLG}/check_list_backup_nuvem_${BASE}.sh"
+
+                # check_integrity_nuvem.sh
+                ${CP} ${CP_OPT1} ${DIR_TEMP}/check_integrity_nuvem.sh \
+                ${CHECK_MK_DIR_PLG}/check_integrity_nuvem.sh 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+            fi
+
+            # Altera as permissões dos sensores para o modo de execução
+            chmod +x -v /usr/lib/check_mk_agent/plugins/*.sh 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+
+            # Habilita servicos da porta 6556 e 6557 apos as devidas configuracoes
+            systemctl restart xinetd 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+
+            # Inventaria sensores automaticos obtidos pelo agente de monitoramento
+            su - ${SITE} -c "cmk -IIv && cmk -Rv" 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+        fi
+
+    } &> /dev/null && echo -e "${GREEN}Sensores Automaticos ..................OK!${NC}\n"
+}

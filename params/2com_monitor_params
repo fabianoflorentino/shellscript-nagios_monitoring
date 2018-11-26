@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+
+# ----------------------------------------------------------------------------------------
+#
+# 2com_monitor_install.bash - Faz a instalação e configuração do serviço de monitoramento.
+#
+# Site: https://gitlab.com/2com-shellscript-monitoramento/2com_monitor.
+# Autor: 2com Consulting (Time de Monitoramento).
+# Manutenção: Fabiano S. Florentino e Carol Santos.
+#
+#
+# Licença: GPL (https://pt.wikipedia.org/wiki/GNU_General_Public_License)
+#
+#-----------------------------------------------------------------------------------------
+#
+# Para executar esse programa é preciso algumas informações do servidor e dos serviços que
+# vão ser monitorados.
+# No arquivo de parametros em "./params/2com_monitor_params" é preciso preencher as 
+# informações:
+#   - SITE=""
+#   - NOME_CLIENTE=""
+#   - IP_LOCAL=""
+#   - BKP_WINTHOR=""
+#   - DB_BKP_DIR=""
+#   - BKP_NUVEM=""
+#   - DB_VERSION=""
+#   - DB_INSTANCE=""
+#   - DB_HOME_SOFT=""
+#   - DATABASE_NAME=""
+#   - HOSTNAME_MAIN=""
+#
+# para que seja realizada a instalação e configuração de forma correta do sistema de
+# monitoramento.
+#
+# Exemplo:
+#   SITE="ol7"
+#   NOME_CLIENTE="TESTE ORACLE LINUX 7"
+#   IP_LOCAL="192.168.62.200"
+#   BKP_WINTHOR="True"
+#   DB_BKP_DIR="\/mnt\/backup\_banco"
+#   BKP_NUVEM="False"
+#   DB_VERSION="11.2.0"
+#   DB_INSTANCE="XE"
+#   DB_HOME_SOFT="dbhome_1"
+#   DATABASE_NAME="WINT"
+#   HOSTNAME_MAIN="${SITE}-dbprimario"
+#
+#   OBS: Para a configuração DB_BKP_DIR o diretório padrão é "/db/backup", esse
+#   diretório só deve ser alterado se o monitoramento estiver em um servidor
+#   separado ou se o diretório de backup do banco for outro Ex. "/u01/backup"
+# -----------------------------------------------------------------------------
+
+# Informações do cliente
+SITE=""
+NOME_CLIENTE=""
+IP_LOCAL=""
+BKP_WINTHOR=""
+BKP_NUVEM=""
+DB_BKP_DIR="\/db\/backup" ### Escapar as barras e o underline.
+DB_VERSION=""
+DB_INSTANCE=""
+DB_HOME_SOFT=""
+DATABASE_NAME=""
+HOSTNAME_MAIN="${SITE}-dbprimario"
+
+# Lista para permissão de execução do programa
+CONFIGS="\${SITE}
+\${NOME_CLIENTE}
+\${IP_LOCAL}
+\${BKP_WINTHOR}
+\${BKP_NUVEM}
+\${DB_BKP_DIR}
+\${DB_VERSION}
+\${DB_INSTANCE}
+\${DB_HOME_SOFT}
+\${DATABASE_NAME}
+\${HOSTNAME_MAIN}"
+
+# Path
+export PATH="/usr/lib64/qt-3.3/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin"
+
+
+# Variáveis de ambiente Oracle
+export ORACLE_HOME=/u01/app/oracle/product/${DB_VERSION}/${DB_HOME_SOFT}
+export ORACLE_SID=${DATABASE_NAME}
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
+
+
+# Log do sistema
+LOG_OUT="./logs/2com_monitor.out"
+LOG_ERROR="./logs/2com_monitor.err"
+COMPILE_LOG="./logs/driver_compile.out"
+
+
+# Lista de pacotes para remoção
+PKG_RM_LIST7=$(cat ./packages/list7_pkg_rm)
+
+# Lista de pacotes para instalação
+PKG_LIST6="./packages/list6"
+PKG_LIST7="./packages/list7"
+
+# Variáveis para o sistema
+REGEX="[^0-9]*\(\([0-9]\.\)\{0,4\}[0-9][^.]\).*"
+RELEASE_DIR="/etc/redhat-release"
+REPO_DIR="/etc/yum.repos.d"
+IF_CENTOS=$(cat "${RELEASE_DIR}" |awk '{ print $1 }')
+OS_VERSION=$(sed -ne "s/${REGEX}/\1/p" "${RELEASE_DIR}" |cut -d"." -f1) 
+
+
+# Repositório Yum Public
+YUMPUB_URL="http://yum.oracle.com"
+YUMPUB_VERIFY=$(grep -r -l "ol${OS_VERSION}_latest" "${REPO_DIR}" |cut -d"/" -f4)
+YUM_GPG_KEY="http://public-yum.oracle.com/RPM-GPG-KEY-oracle-ol${OS_VERSION}"
+YUM_UTILS="yum-utils"
+
+
+# Yum
+YUM_PRG="yum"
+YUM_OPT1="install"
+YUM_OPT2="localinstall"
+YUM_OPT3="remove"
+YUM_OPT_FLAG1="-y"
+YUM_OPT_FLAG2="-v"
+
+
+# Yum Config Manager
+YUM_CM="yum-config-manager"
+YUM_CM_OPT1="--enable"
+OL_OPT_LTST="ol${OS_VERSION}_optional_latest"
+
+
+# Copy
+CP=$(which cp |tail -n 1 |xargs)
+CP_OPT1="-rfv"
+
+
+# Repositório EPEL
+EPEL_URL="https://dl.fedoraproject.org/pub/epel"
+EPEL_VERIFY=$(grep -r -l "repo=epel-${OS_VERSION}" ${REPO_DIR} |cut -d"/" -f4)
+
+
+# Repositório MariaDB
+MARIADB_INSTALL="./repos/mariadb.repo ${REPO_DIR}/"
+MARIADB_VERIFY=$(grep -r -l "mariadb" ${REPO_DIR} |cut -d"/" -f4)
+
+
+# Pacote de instalação do OMD
+OMD_RHEL="./packages/omd-1.30.rhel${OS_VERSION}.x86_64.rpm"
+OMD_RHEL_VERIFY=$(rpm -aq |grep omd-1.30-el${OS_VERSION}-35.x86_64)
+SITE_VERIFY=$(cat /etc/passwd |egrep "^${SITE}" |cut -d":" -f1)
+SITE_VERIFY_2=$(cat /etc/group |egrep "^${SITE}" |cut -d":" -f1)
+OMD_PY_DIR="/omd/versions/1.30/lib/python"
+
+
+# Pacote de instalação do Check_MK
+CHECK_MK_DIR_AG="/opt/omd/versions/1.30/share/check_mk/agents"
+CHECK_MK_AG="check-mk-agent-1.2.6p12-1.noarch.rpm"
+CHECK_MK_VERIFY=$(rpm -aq |grep check-mk-agent-1.2.6p12-1.noarch)
+
+
+# Pacote Perl ExtUtils Make Maker
+PERL_EXTUTILS_MAKE_VERIFY=$(rpm -aq |grep "perl-ExtUtils-MakeMaker")
+
+
+# Driver Oracle
+OCL_DRIVE_FILE="/usr/local/lib64/perl5/auto/DBD/Oracle/Oracle.so"
+
+
+# Template 2COM
+URL_OMD_HTDOCS="/opt/omd/versions/1.30/share/check_mk/web/htdocs"
+URL_OMD_DASH="/opt/omd/versions/1.30/share/check_mk/web/plugins/dashboard"
+URL_OMD_IMG="/opt/omd/versions/1.30/share/check_mk/web/htdocs/images"
+
+
+# Configuração do Nagios
+NAGIOS_CONFIG_FILE="/opt/omd/sites/${SITE}/etc/mk-livestatus"
+
+
+# Configuração do main.mk
+MAIN_MK_DIR="/omd/sites/${SITE}/etc/check_mk"
+MAIN_MK_OPT="#\ Arquivo\ main.mk\ padrao\ 2com"
+MAIN_MK_VERIFY=$(grep -r -i "${MAIN_MK_OPT}" ${MAIN_MK_DIR}/main.mk 2> /dev/null)
+
+
+# Configuração dos sensores
+CHECK_MK_DIR_PLG="/usr/lib/check_mk_agent/plugins"
+CREATE_BASE_LIST=$(echo "${DATABASE_NAME}" > ./config/base_list)
+BASES=$(cat ./config/base_list)
+DIR_TEMP="./config/sensors"
+
+
+# Configuração do livestatus
+LIVESTATUS_FILE="/etc/xinetd.d/livestatus"
+
+
+# Customização
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+NC="\033[0m"
+YELLOW="\033[1;33m"

@@ -1,0 +1,71 @@
+# Função [config_tnsnames_ora]
+
+Função para configuração do arquivo de configuração do tnsnames.ora, a configu
+ração só acontece se o arquivo não existir por ser um arquivo sensível.
+
+OBS: essa função encontra-se no path **./config/tnsname_ora**.
+
+### Tnsnames
+
+Verifica se o arquivo tnsnames existe, se existir não é feita nenhuma alteração
+
+```bash
+if [ ! -f "${ORACLE_HOME}/network/admin/tnsnames.ora" ];then
+```
+
+### Permissões
+
+Configura as permissões do arquivo.
+
+```bash
+chown oracle:dba -v ${ORACLE_HOME}/network/admin/tnsnames.ora 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+chmod +x -v ${ORACLE_HOME}/network/admin/tnsnames.ora 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+```
+
+### Template
+
+Template da configuração do arquivo tnsnames.ora.
+
+```bash
+cat << EOF > ${ORACLE_HOME}/network/admin/tnsnames.ora
+${DATABASE_NAME} =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = ${HOSTNAME})(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = ${DB_INSTANCE})
+    )
+  )
+EOF
+```
+
+### Função completa da configuração do tnsnames
+```bash
+config_tnsnames_ora()
+{
+
+if [ ! -f "${ORACLE_HOME}/network/admin/tnsnames.ora" ];then
+
+{
+
+cat << EOF > ${ORACLE_HOME}/network/admin/tnsnames.ora
+${DATABASE_NAME} =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = ${HOSTNAME})(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = ${DB_INSTANCE})
+    )
+  )
+EOF
+
+chown oracle:dba -v ${ORACLE_HOME}/network/admin/tnsnames.ora 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+chmod +x -v ${ORACLE_HOME}/network/admin/tnsnames.ora 1>> "${LOG_OUT}" 2>> "${LOG_ERROR}"
+
+} &> /dev/null && echo -e "${GREEN}TNSNAMES ..............................OK!${NC}\n"
+
+else
+    echo -e "${GREEN}TNSNAMES ..............................OK!${NC}\n"
+fi
+}
+```

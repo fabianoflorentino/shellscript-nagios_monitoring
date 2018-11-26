@@ -1,0 +1,8 @@
+wget
+libaio
+bc
+flex
+gcc
+gcc-c++
+unzip
+bzip2
